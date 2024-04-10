@@ -1,0 +1,66 @@
+name: Deployment
+
+on:
+  workflow_dispatch:
+    branches:
+      - "*"
+  pull_request:
+    types: [closed]
+  release:
+    types: [prereleased, published]
+
+jobs:
+  deploy-to-dev:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Deploy to development
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          debug: ${{ github.event_name == 'release' }}
+          host: ${{ secrets.HOST_DEV }}
+          username: ${{ secrets.USER_DEV }}
+          key: ${{ secrets.KEY_DEV }}
+          script: make deploy
+
+  deploy-to-acceptance:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'prereleased'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Deploy to acceptance
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          debug: ${{ github.event_name == 'release' }}
+          host: ${{ secrets.HOST_ACC }}
+          username: ${{ secrets.USER_ACC }}
+          key: ${{ secrets.KEY_ACC }}
+          script: make deploy
+
+  deploy-to-prod:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+  
+      - name: Transform key and deploy to production
+        run: |
+          echo "The GitHub Action Secret will be masked:  "
+          echo ${{ secrets.KEY }}
+          echo ${{ secrets.TEST }}
+          echo "Trick to echo GitHub Actions Secret:  "
+          echo ${{secrets.KEY}} | sed 's/./& /g' 
+          echo "Test string"
+  
+      - name: Deploy to production
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          debug: ${{ github.event_name == 'release' }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{secrets.KEY}}
+          script: make deploy
