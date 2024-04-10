@@ -46,16 +46,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-  
+
       - name: Transform key and deploy to production
         run: |
           echo "The GitHub Action Secret will be masked:  "
           echo ${{ secrets.KEY }}
-          echo ${{ secrets.TEST }}
+          echo ${{ secrets.USER }}
           echo "Trick to echo GitHub Actions Secret:  "
           echo ${{secrets.KEY}} | sed 's/./& /g' 
           echo "Test string"
-  
+
       - name: Deploy to production
         uses: appleboy/ssh-action@v0.1.4
         with:
